@@ -31,8 +31,6 @@ impl<'r> FromRequest<'r> for ValidToken {
 
         let keyset = KeyStore::new_from(security_config.jwks_url.clone()).await.unwrap();
 
-        println!("{}", token);
-
         match keyset.verify(token) {
             Ok(jwt) => {
                 let payload = jwt.payload();
