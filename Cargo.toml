@@ -9,8 +9,11 @@ repository = "https://github.com/linasdev/ross-google-fulfillment"
 readme = "README.md"
 
 [dependencies]
-rocket = "0.4.10"
-rocket_contrib = "0.4.10"
+jwks-client = {git = "https://github.com/jfbilodeau/jwks-client"}
+
+[dependencies.rocket]
+version = "0.5.0-rc.1"
+features = ["json"]
 
 [dependencies.serde]
 version = "1.0.131"
