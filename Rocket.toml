@@ -2,6 +2,9 @@
 token_header = "Authorization"
 token_prefix = "Bearer "
 
+[global.databases]
+ross_google_fulfillment = { url = "postgres://postgres:postgres@localhost/ross_google_fulfillment" }
+
 [debug]
 address = "0.0.0.0"
 token_audience = "https://fulfillment.ross-smart-home.com/"
