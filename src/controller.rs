@@ -1,6 +1,7 @@
 use rocket::post;
 use rocket::serde::json::Json;
-use log::info;
+use log::{info, warn};
+use std::convert::TryInto;
 
 use crate::models::fulfillment_request::{FulfillmentRequest, Intent};
 use crate::models::fulfillment_response::{FulfillmentResponse, Payload};
@@ -37,39 +38,27 @@ pub async fn fulfillment(request: Json<FulfillmentRequest>, token: ValidToken, m
                     devices,
                 }
             }))
+        },
+        Intent::Query { devices: query_devices } => {
+            let devices = device_service.get_all_devices_by_account_id(account.id)
+                .await?
+                .into_iter()
+                .filter(|device| query_devices.iter().any(|query_device| device.id == query_device.id))
+                .filter_map(|device| match device.try_into() {
+                    Ok(state) => Some(state),
+                    Err(err) => {
+                        warn!("Failed to convert device into query device state with error: {:?}", err);
+                        None
+                    }
+                })
+                .collect();
 
-            // Ok(Json(FulfillmentResponse {
-            //     request_id: request.request_id,
-            //     payload: Payload::SyncPayload {
-            //         agent_user_id: token.subject,
-            //         devices: vec![
-            //             SyncDevice {
-            //                 id: "123".to_string(),
-            //                 device_type: "action.devices.types.OUTLET".to_string(),
-            //                 traits: vec![
-            //                     "action.devices.traits.OnOff".to_string()
-            //                 ],
-            //                 name: SyncDeviceName {
-            //                     default_names: vec![],
-            //                     name: "Outlet 1".to_string(),
-            //                     nicknames: vec![],
-            //                 }
-            //             },
-            //             SyncDevice {
-            //                 id: "456".to_string(),
-            //                 device_type: "action.devices.types.OUTLET".to_string(),
-            //                 traits: vec![
-            //                     "action.devices.traits.OnOff".to_string()
-            //                 ],
-            //                 name: SyncDeviceName {
-            //                     default_names: vec![],
-            //                     name: "Outlet 2".to_string(),
-            //                     nicknames: vec![],
-            //                 }
-            //             },
-            //         ]
-            //     }
-            // }))
+            Ok(Json(FulfillmentResponse {
+                request_id: request.request_id,
+                payload: Payload::QueryPayload {
+                    devices,
+                }
+            }))
         }
     }
 }

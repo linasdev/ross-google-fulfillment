@@ -12,6 +12,7 @@ readme = "README.md"
 log = "0.4"
 fern = "0.5"
 chrono = "0.4.19"
+serde_json = "1.0.73"
 jwks-client = {git = "https://github.com/jfbilodeau/jwks-client"}
 
 [dependencies.rocket]

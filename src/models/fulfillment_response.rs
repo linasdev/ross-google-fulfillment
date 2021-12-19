@@ -1,7 +1,8 @@
 use serde::Serialize;
 use rocket::serde::uuid::Uuid;
+use std::convert::TryFrom;
 
-use crate::entities::device::Device;
+use crate::entities::device::{Device, DeviceState};
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -16,6 +17,9 @@ pub enum Payload {
     SyncPayload {
         agent_user_id: String,
         devices: Vec<SyncDevice>,
+    },
+    QueryPayload {
+        devices: Vec<QueryDeviceStatus>,
     }
 }
 
@@ -45,5 +49,40 @@ impl From<Device> for SyncDevice {
             },
             traits: device.traits,
         }
+    }
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QueryDeviceStatus {
+    pub online: bool,
+    pub status: QueryStatus,
+    pub on: Option<bool>,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum QueryStatus {
+    Success,
+    Offline,
+    Exceptions,
+    Error,
+}
+
+impl TryFrom<Device> for QueryDeviceStatus {
+    type Error = serde_json::Error;
+
+    fn try_from(device: Device) -> Result<Self, Self::Error> {
+        let last_state = device.get_last_state()?;
+
+        Ok(Self {
+            online: true,
+            status: QueryStatus::Success,
+            on: if let DeviceState::OnOff(value) = last_state {
+                Some(value)
+            } else {
+                None
+            },
+        })
     }
 }
