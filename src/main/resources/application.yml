@@ -1,0 +1,18 @@
+spring:
+  flyway:
+    enabled: true
+    locations: "classpath:migration"
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/ross_google_fulfillment"
+    username: "postgres"
+    password: "postgres"
+  jpa:
+    properties:
+      hibernate:
+        dialect: "org.hibernate.dialect.PostgreSQLDialect"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: "https://ross-smart-home.eu.auth0.com/.well-known/jwks.json"
+
