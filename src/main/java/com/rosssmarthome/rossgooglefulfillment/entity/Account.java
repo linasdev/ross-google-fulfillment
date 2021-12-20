@@ -35,4 +35,12 @@ public class Account {
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @Builder.Default
     private List<Gateway> gateways = new ArrayList<>();
+
+    public Device findDeviceById(UUID deviceId) {
+        return gateways.stream()
+                .flatMap(gateway -> gateway.getDevices().stream())
+                .filter(device -> device.getId().equals(deviceId))
+                .findFirst()
+                .orElse(null);
+    }
 }
