@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Google Cloud Platform ###
+gcp_credentials.json

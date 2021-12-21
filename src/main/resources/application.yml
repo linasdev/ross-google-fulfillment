@@ -15,4 +15,28 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: "https://ross-smart-home.eu.auth0.com/.well-known/jwks.json"
-
+  cloud:
+    gcp:
+      project-id: "ross-smart-home"
+      credentials:
+        location: "classpath:gcp_credentials.json"
+        scopes: "https://www.googleapis.com/auth/pubsub"
+    function:
+      definition: "handleStateUpdate;handleDeadLetter"
+    stream:
+      bindings:
+        handleStateUpdate-in-0:
+          destination: "projects/ross-smart-home/topics/device-state"
+        handleDeadLetter-in-0:
+          destination: "projects/ross-smart-home/topics/dead-letter"
+      gcp:
+        pubsub:
+          default:
+            consumer:
+              auto-create-resources: false
+          bindings:
+            handleStateUpdate-in-0:
+              consumer:
+                dead-letter-policy:
+                  dead-letter-topic: "projects/ross-smart-home/topics/dead-letter"
+                  max-delivery-attempts: 5

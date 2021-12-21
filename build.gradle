@@ -21,10 +21,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-	implementation 'org.flywaydb:flyway-core'
-	implementation 'org.postgresql:postgresql'
+	implementation platform('com.google.cloud:spring-cloud-gcp-dependencies:2.0.6')
+	implementation 'com.google.cloud:spring-cloud-gcp-pubsub-stream-binder'
 
 	implementation 'com.google.actions:actions-on-google:1.8.0'
+
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.postgresql:postgresql'
 }
 
 test {

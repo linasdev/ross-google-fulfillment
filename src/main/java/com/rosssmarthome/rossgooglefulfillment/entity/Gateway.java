@@ -31,7 +31,7 @@ public class Gateway {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @OneToMany(mappedBy = "gateway", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "gateway", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Device> devices = new ArrayList<>();
 }

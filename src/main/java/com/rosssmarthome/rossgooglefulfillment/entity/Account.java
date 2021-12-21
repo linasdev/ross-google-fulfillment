@@ -32,7 +32,7 @@ public class Account {
     @Column(name = "token_subject")
     private String tokenSubject;
 
-    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Gateway> gateways = new ArrayList<>();
 

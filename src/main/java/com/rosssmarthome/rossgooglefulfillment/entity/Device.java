@@ -43,11 +43,22 @@ public class Device {
     @Column(name = "device_name")
     private String deviceName;
 
-    @OneToMany(mappedBy = "device", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "device", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Trait> traits = new ArrayList<>();
 
-    @OneToMany(mappedBy = "device", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "device", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<State> states = new ArrayList<>();
+
+    public void clearStates() {
+        this.states.clear();
+    }
+
+    public void addState(State state) {
+        if (state != null) {
+            state.setDevice(this);
+            states.add(state);
+        }
+    }
 }
