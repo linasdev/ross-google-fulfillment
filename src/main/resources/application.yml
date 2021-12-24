@@ -22,11 +22,11 @@ spring:
         location: "classpath:gcp_credentials.json"
         scopes: "https://www.googleapis.com/auth/pubsub"
     function:
-      definition: "handleStateUpdate;handleDeadLetter"
+      definition: "handleNewGatewayState;handleDeadLetter"
     stream:
       bindings:
-        handleStateUpdate-in-0:
-          destination: "projects/ross-smart-home/topics/device-state"
+        handleNewGatewayState-in-0:
+          destination: "projects/ross-smart-home/topics/gateway-state"
         handleDeadLetter-in-0:
           destination: "projects/ross-smart-home/topics/dead-letter"
       gcp:
@@ -35,7 +35,7 @@ spring:
             consumer:
               auto-create-resources: false
           bindings:
-            handleStateUpdate-in-0:
+            handleNewGatewayState-in-0:
               consumer:
                 dead-letter-policy:
                   dead-letter-topic: "projects/ross-smart-home/topics/dead-letter"

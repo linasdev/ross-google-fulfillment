@@ -1,13 +1,25 @@
 package com.rosssmarthome.rossgooglefulfillment.config;
 
-import com.rosssmarthome.rossgooglefulfillment.data.StateUpdateRequest;
-import com.rosssmarthome.rossgooglefulfillment.service.DeviceService;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.cloudiot.v1.CloudIot;
+import com.google.api.services.cloudiot.v1.CloudIotScopes;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.rosssmarthome.rossgooglefulfillment.data.GatewayState;
+import com.rosssmarthome.rossgooglefulfillment.service.GatewayService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -15,28 +27,43 @@ import java.util.function.Consumer;
 @Configuration
 public class GcpConfig {
     @Bean
+    public CloudIot cloudIot() throws IOException, GeneralSecurityException {
+        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("gcp_credentials.json");
+        GoogleCredentials googleCredentials = GoogleCredentials.fromStream(inputStream).createScoped(CloudIotScopes.CLOUDIOT);
+        HttpRequestInitializer init = new HttpCredentialsAdapter(googleCredentials);
+
+        CloudIot cloudIot = new CloudIot.Builder(httpTransport, jsonFactory, init).build();
+
+        return cloudIot;
+    }
+
+    @Bean
     @Transactional
-    public Consumer<Message<StateUpdateRequest>> handleStateUpdate(DeviceService deviceService) {
+    public Consumer<Message<GatewayState>> handleNewGatewayState(GatewayService gatewayService) {
         return message -> {
             String deviceIdHeader = message.getHeaders().get("deviceId", String.class);
 
             if (deviceIdHeader == null) {
-                log.warn("No device id header found with state update request");
+                log.warn("No device id header found with new gateway state request");
                 return;
             }
 
-            UUID deviceId;
+            UUID gatewayId;
 
             try {
-                deviceId = UUID.fromString(deviceIdHeader);
+                gatewayId = UUID.fromString(deviceIdHeader);
             } catch (IllegalArgumentException ex) {
-                log.warn("Invalid device id header found with state update request", ex);
+                log.warn("Invalid device id header found with new gateway state request", ex);
                 return;
             }
 
-            log.info("Processing state update request for device with id: {}", deviceId);
+            log.info("Processing new gateway state request for gateway with id: {}", gatewayId);
 
-            deviceService.handleStateUpdate(deviceId, message.getPayload());
+            gatewayService.handleNewState(gatewayId, message.getPayload());
         };
     }
 

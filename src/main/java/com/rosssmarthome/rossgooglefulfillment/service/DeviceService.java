@@ -1,8 +1,6 @@
 package com.rosssmarthome.rossgooglefulfillment.service;
 
-import com.rosssmarthome.rossgooglefulfillment.data.StateUpdateRequest;
 import com.rosssmarthome.rossgooglefulfillment.entity.Device;
-import com.rosssmarthome.rossgooglefulfillment.entity.State;
 import com.rosssmarthome.rossgooglefulfillment.repository.DeviceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,22 +16,12 @@ public class DeviceService {
     private final DeviceRepository deviceRepository;
 
     @Transactional
-    public void handleStateUpdate(UUID deviceId, StateUpdateRequest request) {
-        Device device = deviceRepository.findById(deviceId).orElse(null);
+    public Device loadByGatewayIdAndPeripheralDetails(UUID gatewayId, Long peripheralAddress, Long peripheralIndex) {
+        return deviceRepository.loadByGatewayIdAndPeripheralDetails(gatewayId, peripheralAddress, peripheralIndex);
+    }
 
-        if (device == null) {
-            log.warn("Cannot find device with id: {}", deviceId);
-            return;
-        }
-
-        device.clearStates();
-        request.getStates().forEach((key, value) -> device.addState(
-                State.builder()
-                    .key(key)
-                    .value(value)
-                    .build())
-        );
-
+    @Transactional
+    public void save(Device device) {
         deviceRepository.save(device);
     }
 }

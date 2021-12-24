@@ -1,11 +1,10 @@
 package com.rosssmarthome.rossgooglefulfillment.service;
 
 import com.google.actions.api.smarthome.*;
+import com.google.api.services.cloudiot.v1.CloudIot;
 import com.google.home.graph.v1.DeviceProto;
 import com.rosssmarthome.rossgooglefulfillment.entity.Account;
 import com.rosssmarthome.rossgooglefulfillment.entity.Device;
-import com.rosssmarthome.rossgooglefulfillment.entity.State;
-import com.rosssmarthome.rossgooglefulfillment.entity.Trait;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FulfillmentService extends SmartHomeApp {
     private final AccountService accountService;
+    private final CloudIot cloudIot;
 
     @NotNull
     @Override
@@ -35,14 +35,11 @@ public class FulfillmentService extends SmartHomeApp {
                 .flatMap(gateway -> gateway.getDevices().stream())
                 .map(device -> new SyncResponse.Payload.Device.Builder()
                         .setId(device.getId().toString())
-                        .setType(device.getDeviceType())
+                        .setType(device.getType().getGoogleDeviceType())
                         .setName(DeviceProto.DeviceNames.newBuilder()
-                                .setName(device.getDeviceName())
+                                .setName(device.getName())
                                 .build())
-                        .setTraits(device.getTraits()
-                                .stream()
-                                .map(Trait::getTrait)
-                                .collect(Collectors.toList()))
+                        .setTraits(device.getType().getGoogleDeviceTraits())
                         .build())
                 .collect(Collectors.toList());
 
@@ -64,19 +61,12 @@ public class FulfillmentService extends SmartHomeApp {
         for (QueryRequest.Inputs.Payload.Device queryDevice : queryDevices) {
             Device device = account.findDeviceById(UUID.fromString(queryDevice.getId()));
 
-            Map<String, Object> responseDevice = new HashMap<>();
+            HashMap<String, Object> responseDevice = new HashMap<>();
 
             if (device != null) {
                 responseDevice.put("status", "SUCCESS");
                 responseDevice.put("online", true);
-
-                for (State state : device.getStates()) {
-                    if (state.getValue().equals("false") || state.getValue().equals("true")) {
-                        responseDevice.put(state.getKey(), Boolean.valueOf(state.getValue()));
-                    } else {
-                        responseDevice.put(state.getKey(), state.getValue());
-                    }
-                }
+                responseDevice.putAll(device.getGoogleDeviceState());
             } else {
                 responseDevice.put("status", "ERROR");
                 responseDevice.put("errorCode", "deviceOffline");
@@ -93,13 +83,13 @@ public class FulfillmentService extends SmartHomeApp {
 
     @NotNull
     @Override
-    public ExecuteResponse onExecute(ExecuteRequest executeRequest, Map<?, ?> headers) {
+    public ExecuteResponse onExecute(ExecuteRequest request, Map<?, ?> headers) {
         throw new UnsupportedOperationException();
     }
 
     @NotNull
     @Override
-    public void onDisconnect(DisconnectRequest disconnectRequest, Map<?, ?> headers) {
+    public void onDisconnect(DisconnectRequest request, Map<?, ?> headers) {
         throw new UnsupportedOperationException();
     }
 

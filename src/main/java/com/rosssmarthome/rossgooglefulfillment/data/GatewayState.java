@@ -6,15 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StateUpdateRequest {
+public class GatewayState {
     @NotEmpty
     @Builder.Default
-    private Map<String, String> states = new HashMap<>();
+    private List<DeviceState> deviceStates = new ArrayList<>();
 }

@@ -1,5 +1,6 @@
 package com.rosssmarthome.rossgooglefulfillment.entity;
 
+import com.rosssmarthome.rossgooglefulfillment.data.StateKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +31,8 @@ public class State {
     private Device device;
 
     @Column(name = "state_key")
-    private String key;
+    @Enumerated(EnumType.STRING)
+    private StateKey key;
 
     @Column(name = "state_value")
     private String value;

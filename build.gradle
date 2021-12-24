@@ -1,5 +1,5 @@
 plugins {
-	id 'org.springframework.boot' version '2.6.1'
+	id 'org.springframework.boot' version '2.5.8'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   	id "io.freefair.lombok" version "6.3.0"
 	id 'java'
@@ -25,6 +25,7 @@ dependencies {
 	implementation 'com.google.cloud:spring-cloud-gcp-pubsub-stream-binder'
 
 	implementation 'com.google.actions:actions-on-google:1.8.0'
+	implementation 'com.google.apis:google-api-services-cloudiot:v1-rev20191203-1.30.3'
 
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.postgresql:postgresql'
