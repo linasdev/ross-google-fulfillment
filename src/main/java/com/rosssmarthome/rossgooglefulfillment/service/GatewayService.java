@@ -2,6 +2,7 @@ package com.rosssmarthome.rossgooglefulfillment.service;
 
 import com.rosssmarthome.rossgooglefulfillment.data.DeviceState;
 import com.rosssmarthome.rossgooglefulfillment.data.GatewayState;
+import com.rosssmarthome.rossgooglefulfillment.data.StateKey;
 import com.rosssmarthome.rossgooglefulfillment.entity.Device;
 import com.rosssmarthome.rossgooglefulfillment.entity.State;
 import com.rosssmarthome.rossgooglefulfillment.repository.DeviceRepository;
@@ -38,12 +39,20 @@ public class GatewayService {
             }
 
             device.clearStates();
-            deviceState.getPeripheralStates().forEach((key, value) -> device.addState(
-                    State.builder()
-                            .key(key)
-                            .value(value)
-                            .build())
-            );
+            deviceState.getPeripheralStates().forEach((key, value) -> {
+                String actualValue = value;
+
+                if (key == StateKey.BRIGHTNESS) {
+                    actualValue = String.valueOf(Long.valueOf(actualValue) / 100L);
+                }
+
+                device.addState(
+                        State.builder()
+                                .key(key)
+                                .value(value)
+                                .build()
+                );
+            });
 
             deviceService.save(device);
         }

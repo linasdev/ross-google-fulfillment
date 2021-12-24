@@ -78,7 +78,7 @@ public class Device {
 
                 return Map.of(
                         "on", Boolean.valueOf(on.getValue()),
-                        "brightness", brightness.getValue()
+                        "brightness", Long.valueOf(brightness.getValue())
                 );
             }
             case BCM_RGB: {
