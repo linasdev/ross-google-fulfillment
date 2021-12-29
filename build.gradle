@@ -26,6 +26,7 @@ dependencies {
 
 	implementation 'com.google.actions:actions-on-google:1.8.0'
 	implementation 'com.google.apis:google-api-services-cloudiot:v1-rev20191203-1.30.3'
+	implementation 'com.google.apis:google-api-services-homegraph:v1-rev20210402-1.32.1'
 
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.postgresql:postgresql'

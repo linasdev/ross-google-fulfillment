@@ -7,6 +7,8 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.cloudiot.v1.CloudIot;
 import com.google.api.services.cloudiot.v1.CloudIotScopes;
+import com.google.api.services.homegraph.v1.HomeGraphService;
+import com.google.api.services.homegraph.v1.HomeGraphServiceScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.rosssmarthome.rossgooglefulfillment.data.GatewayState;
@@ -27,18 +29,30 @@ import java.util.function.Consumer;
 @Configuration
 public class GcpConfig {
     @Bean
-    public CloudIot cloudIot() throws IOException, GeneralSecurityException {
-        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+    public HttpTransport httpTransport() throws GeneralSecurityException, IOException {
+        return GoogleNetHttpTransport.newTrustedTransport();
+    }
 
-        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+    @Bean
+    public JsonFactory jsonFactory() {
+        return GsonFactory.getDefaultInstance();
+    }
 
+    @Bean
+    public HttpRequestInitializer httpRequestInitializer() throws IOException {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("gcp_credentials.json");
-        GoogleCredentials googleCredentials = GoogleCredentials.fromStream(inputStream).createScoped(CloudIotScopes.CLOUDIOT);
-        HttpRequestInitializer init = new HttpCredentialsAdapter(googleCredentials);
+        GoogleCredentials googleCredentials = GoogleCredentials.fromStream(inputStream).createScoped(CloudIotScopes.CLOUDIOT, HomeGraphServiceScopes.HOMEGRAPH);
+        return new HttpCredentialsAdapter(googleCredentials);
+    }
 
-        CloudIot cloudIot = new CloudIot.Builder(httpTransport, jsonFactory, init).build();
+    @Bean
+    public CloudIot cloudIot(HttpTransport httpTransport, JsonFactory jsonFactory, HttpRequestInitializer httpRequestInitializer) {
+        return new CloudIot.Builder(httpTransport, jsonFactory, httpRequestInitializer).build();
+    }
 
-        return cloudIot;
+    @Bean
+    public HomeGraphService homeGraphService(HttpTransport httpTransport, JsonFactory jsonFactory, HttpRequestInitializer httpRequestInitializer) {
+        return new HomeGraphService.Builder(httpTransport, jsonFactory, httpRequestInitializer).build();
     }
 
     @Bean
