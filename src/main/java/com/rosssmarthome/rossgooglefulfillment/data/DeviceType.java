@@ -31,4 +31,16 @@ public enum DeviceType {
                 throw new UnsupportedOperationException();
         }
     }
+
+    public String getGoogleDeviceName() {
+        switch (this) {
+            case RELAY_SINGLE:
+                return "Outlet";
+            case BCM_SINGLE:
+            case BCM_RGB:
+                return "Light";
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
 }

@@ -2,9 +2,12 @@ package com.rosssmarthome.rossgooglefulfillment.service;
 
 import com.google.actions.api.smarthome.*;
 import com.google.api.services.cloudiot.v1.CloudIot;
+import com.google.api.services.homegraph.v1.HomeGraphService;
+import com.google.api.services.homegraph.v1.model.AgentDeviceId;
+import com.google.api.services.homegraph.v1.model.QueryRequestInput;
+import com.google.api.services.homegraph.v1.model.QueryRequestPayload;
 import com.google.home.graph.v1.DeviceProto;
 import com.rosssmarthome.rossgooglefulfillment.entity.Account;
-import com.rosssmarthome.rossgooglefulfillment.entity.Device;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,17 +15,19 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FulfillmentService extends SmartHomeApp {
     private final AccountService accountService;
+    private final HomeGraphService homeGraphService;
     private final CloudIot cloudIot;
 
     @NotNull
@@ -56,26 +61,40 @@ public class FulfillmentService extends SmartHomeApp {
 
         QueryRequest.Inputs.Payload.Device[] queryDevices = ((QueryRequest.Inputs) request.getInputs()[0]).getPayload().getDevices();
 
-        Map<String, Map<String, Object>> responseDevices = new HashMap<>();
+        List<QueryRequestInput> inputs = Stream.of(request.getInputs())
+                .map(input -> (QueryRequest.Inputs) input)
+                .map(input -> {
+                    QueryRequestPayload payload = new QueryRequestPayload();
+                    payload.setDevices(Arrays.stream(input.getPayload().getDevices())
+                            .map(device -> {
+                                AgentDeviceId id = new AgentDeviceId();
+                                id.setId(device.getId());
+                                return id;
+                            })
+                            .collect(Collectors.toList())
+                    );
 
-        for (QueryRequest.Inputs.Payload.Device queryDevice : queryDevices) {
-            Device device = account.findDeviceById(UUID.fromString(queryDevice.getId()));
+                    QueryRequestInput newInput = new QueryRequestInput();
+                    newInput.setPayload(payload);
+                    return newInput;
+                })
+                .collect(Collectors.toList());
 
-            HashMap<String, Object> responseDevice = new HashMap<>();
+        com.google.api.services.homegraph.v1.model.QueryRequest homeGraphRequest = new com.google.api.services.homegraph.v1.model.QueryRequest();
+        homeGraphRequest.setRequestId(request.getRequestId());
+        homeGraphRequest.setAgentUserId(account.getId().toString());
+        homeGraphRequest.setInputs(inputs);
 
-            if (device != null) {
-                responseDevice.put("status", "SUCCESS");
-                responseDevice.put("online", true);
-                responseDevice.putAll(device.getGoogleDeviceState());
-            } else {
-                responseDevice.put("status", "ERROR");
-                responseDevice.put("errorCode", "deviceOffline");
-            }
+        com.google.api.services.homegraph.v1.model.QueryResponse homeGraphResponse;
 
-            responseDevices.put(device.getId().toString(), responseDevice);
+        try {
+            homeGraphResponse = homeGraphService.devices().query(homeGraphRequest).execute();
+        } catch (IOException e) {
+            log.warn("Failed to query HomeGraph device state", e);
+            return null;
         }
 
-        QueryResponse.Payload payload = new QueryResponse.Payload(responseDevices);
+        QueryResponse.Payload payload = new QueryResponse.Payload(homeGraphResponse.getPayload().getDevices());
         QueryResponse response = new QueryResponse(request.getRequestId(), payload);
 
         return response;

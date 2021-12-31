@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 @Builder
@@ -22,6 +20,5 @@ public class DeviceState {
     private Long peripheralIndex;
 
     @NotEmpty
-    @Builder.Default
-    private Map<StateKey, String> peripheralStates = new HashMap<>();
+    private PeripheralState peripheralState;
 }

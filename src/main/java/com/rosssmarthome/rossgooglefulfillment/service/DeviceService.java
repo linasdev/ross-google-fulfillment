@@ -1,5 +1,6 @@
 package com.rosssmarthome.rossgooglefulfillment.service;
 
+import com.rosssmarthome.rossgooglefulfillment.data.DeviceType;
 import com.rosssmarthome.rossgooglefulfillment.entity.Device;
 import com.rosssmarthome.rossgooglefulfillment.repository.DeviceRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,9 @@ import java.util.UUID;
 public class DeviceService {
     private final DeviceRepository deviceRepository;
 
-    @Transactional
-    public Device loadByGatewayIdAndPeripheralDetails(UUID gatewayId, Long peripheralAddress, Long peripheralIndex) {
-        return deviceRepository.loadByGatewayIdAndPeripheralDetails(gatewayId, peripheralAddress, peripheralIndex);
+    @Transactional(readOnly = true)
+    public Device getByGatewayIdAndPeripheralDetailsAndType(UUID gatewayId, Long peripheralAddress, Long peripheralIndex, DeviceType type) {
+        return deviceRepository.getByGatewayIdAndPeripheralAddressAndPeripheralIndexAndType(gatewayId, peripheralAddress, peripheralIndex, type);
     }
 
     @Transactional
