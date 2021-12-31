@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +16,5 @@ import java.util.List;
 public class GatewayState {
     @NotEmpty
     @Builder.Default
-    @Valid
-    private List<@Valid DeviceState> deviceStates = new ArrayList<>();
+    private List<DeviceState> deviceStates = new ArrayList<>();
 }

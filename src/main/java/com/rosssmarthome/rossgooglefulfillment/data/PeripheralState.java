@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
@@ -21,8 +20,7 @@ public class PeripheralState {
 
     @NotEmpty
     @Builder.Default
-    @Valid
-    private Map<@Valid StateKey, @Valid String> payload = new HashMap<>();
+    private Map<StateKey, String> payload = new HashMap<>();
 
     public Map<String, Object> getGoogleDeviceState() {
         switch (type) {
