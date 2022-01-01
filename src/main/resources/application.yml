@@ -40,3 +40,8 @@ spring:
                 dead-letter-policy:
                   dead-letter-topic: "projects/ross-smart-home/topics/dead-letter"
                   max-delivery-attempts: 5
+
+gcp:
+  project-id: "ross-smart-home"
+  region: "europe-west1"
+  registry-id: "ross-smart-home"

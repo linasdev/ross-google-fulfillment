@@ -17,6 +17,11 @@ public class DeviceService {
     private final DeviceRepository deviceRepository;
 
     @Transactional(readOnly = true)
+    public Device getById(UUID deviceId) {
+        return deviceRepository.getById(deviceId);
+    }
+
+    @Transactional(readOnly = true)
     public Device getByGatewayIdAndPeripheralDetailsAndType(UUID gatewayId, Long peripheralAddress, Long peripheralIndex, DeviceType type) {
         return deviceRepository.getByGatewayIdAndPeripheralAddressAndPeripheralIndexAndType(gatewayId, peripheralAddress, peripheralIndex, type);
     }

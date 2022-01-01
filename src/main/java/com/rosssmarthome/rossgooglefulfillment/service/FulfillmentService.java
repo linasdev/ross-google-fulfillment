@@ -1,13 +1,22 @@
 package com.rosssmarthome.rossgooglefulfillment.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.actions.api.smarthome.*;
 import com.google.api.services.cloudiot.v1.CloudIot;
+import com.google.api.services.cloudiot.v1.model.SendCommandToDeviceRequest;
 import com.google.api.services.homegraph.v1.HomeGraphService;
 import com.google.api.services.homegraph.v1.model.AgentDeviceId;
 import com.google.api.services.homegraph.v1.model.QueryRequestInput;
 import com.google.api.services.homegraph.v1.model.QueryRequestPayload;
 import com.google.home.graph.v1.DeviceProto;
+import com.rosssmarthome.rossgooglefulfillment.data.CommandType;
+import com.rosssmarthome.rossgooglefulfillment.data.DeviceCommand;
+import com.rosssmarthome.rossgooglefulfillment.data.GatewayCommand;
+import com.rosssmarthome.rossgooglefulfillment.data.StateKey;
 import com.rosssmarthome.rossgooglefulfillment.entity.Account;
+import com.rosssmarthome.rossgooglefulfillment.entity.Device;
+import com.rosssmarthome.rossgooglefulfillment.properties.GcpProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,9 +25,8 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,8 +35,11 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class FulfillmentService extends SmartHomeApp {
     private final AccountService accountService;
+    private final DeviceService deviceService;
     private final HomeGraphService homeGraphService;
     private final CloudIot cloudIot;
+    private final GcpProperties gcpProperties;
+    private final ObjectMapper objectMapper;
 
     @NotNull
     @Override
@@ -103,7 +114,94 @@ public class FulfillmentService extends SmartHomeApp {
     @NotNull
     @Override
     public ExecuteResponse onExecute(ExecuteRequest request, Map<?, ?> headers) {
-        throw new UnsupportedOperationException();
+        List<ExecuteRequest.Inputs.Payload.Commands> commands = Stream.of(request.getInputs())
+                .map(input -> (ExecuteRequest.Inputs) input)
+                .map(input -> input.getPayload())
+                .flatMap(payload -> Arrays.stream(payload.getCommands()))
+                .collect(Collectors.toList());
+
+        List<ExecuteResponse.Payload.Commands> responseCommands = new ArrayList<>();
+
+        for (ExecuteRequest.Inputs.Payload.Commands command : commands) {
+            Map<UUID, GatewayCommand> gatewayCommands = new HashMap<>();
+
+            for (ExecuteRequest.Inputs.Payload.Commands.Execution execution : command.getExecution()) {
+                for (ExecuteRequest.Inputs.Payload.Commands.Devices executeDevice : command.getDevices()) {
+                    Device device = deviceService.getById(UUID.fromString(executeDevice.getId()));
+                    UUID gatewayId = device.getGateway().getId();
+
+                    DeviceCommand deviceCommand = DeviceCommand.builder()
+                            .peripheralAddress(device.getPeripheralAddress())
+                            .peripheralIndex(device.getPeripheralIndex())
+                            .build();
+
+                    switch (execution.getCommand()) {
+                        case "action.devices.commands.BrightnessAbsolute":
+                            deviceCommand.setType(CommandType.BCM_SET_SINGLE);
+                            deviceCommand.getPayload().put(
+                                    StateKey.BRIGHTNESS,
+                                    Long.valueOf((long) (((Integer) execution.getParams().get("brightness")).doubleValue() / 100 * 255))
+                            );
+                            break;
+                        default:
+                            throw new UnsupportedOperationException();
+                    }
+
+                    if (gatewayCommands.containsKey(gatewayId)) {
+                        GatewayCommand gatewayCommand = gatewayCommands.get(gatewayId);
+                        gatewayCommand.getDeviceCommands().add(deviceCommand);
+                    } else {
+                        GatewayCommand gatewayCommand = GatewayCommand.builder().build();
+                        gatewayCommand.getDeviceCommands().add(deviceCommand);
+                        gatewayCommands.put(gatewayId, gatewayCommand);
+                    }
+                }
+
+                responseCommands.add(new ExecuteResponse.Payload.Commands(
+                        Arrays.stream(command.getDevices())
+                                .map(ExecuteRequest.Inputs.Payload.Commands.Devices::getId)
+                                .collect(Collectors.toList())
+                                .toArray(new String[0]),
+                        "SUCCESS",
+                        null,
+                        null,
+                        null
+                ));
+            }
+
+            gatewayCommands.forEach((gatewayId, gatewayCommand) -> {
+                log.info("Sending command to gateway with id: {}", gatewayId);
+
+                String name = String.format(
+                        "projects/%s/locations/%s/registries/%s/devices/%s",
+                        gcpProperties.getProjectId(),
+                        gcpProperties.getRegion(),
+                        gcpProperties.getRegistryId(),
+                        gatewayId.toString()
+                );
+
+                SendCommandToDeviceRequest cloudIotRequest = new SendCommandToDeviceRequest();
+
+                try {
+                    String jsonData = objectMapper.writeValueAsString(gatewayCommand);
+                    String encodedData = Base64.getEncoder().encodeToString(jsonData.getBytes(StandardCharsets.UTF_8));
+                    cloudIotRequest.setBinaryData(encodedData);
+                } catch (JsonProcessingException e) {
+                    log.warn("Failed to serialize gateway command", e);
+                }
+
+                try {
+                    cloudIot.projects().locations().registries().devices().sendCommandToDevice(name, cloudIotRequest).execute();
+                } catch (IOException e) {
+                    log.warn("Failed to send command to Cloud IoT", e);
+                }
+            });
+        }
+
+        ExecuteResponse.Payload payload = new ExecuteResponse.Payload(responseCommands.toArray(new ExecuteResponse.Payload.Commands[0]));
+        ExecuteResponse response = new ExecuteResponse(request.getRequestId(), payload);
+
+        return response;
     }
 
     @NotNull
