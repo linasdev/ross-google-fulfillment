@@ -38,11 +38,11 @@ public class Device {
     @Column(name = "peripheral_index")
     private Long peripheralIndex;
 
-    @Column(name = "device_type")
+    @Column(name = "type")
     @Enumerated(EnumType.STRING)
     private DeviceType type;
 
-    @Column(name = "device_name")
+    @Column(name = "name")
     private String name;
 
     @Column(name = "last_seen")
