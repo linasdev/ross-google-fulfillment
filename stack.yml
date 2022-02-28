@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  ross-google-fulfillment:
+    image: 'ross-google-fulfillment:latest'
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/ross-google-fulfillment
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    networks:
+      - app
+  database:
+    image: 'postgres:14-alpine'
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ross-google-fulfillment
+    volumes:
+      - database:/var/lib/postgresql/data
+    networks:
+      - app
+volumes:
+  database:
+networks:
+  app:
