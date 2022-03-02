@@ -32,18 +32,21 @@ public class Device {
     @JoinColumn(name = "gateway_id")
     private Gateway gateway;
 
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
+    private DeviceType type;
+
     @Column(name = "peripheral_address")
     private Long peripheralAddress;
 
     @Column(name = "peripheral_index")
     private Long peripheralIndex;
 
-    @Column(name = "type")
-    @Enumerated(EnumType.STRING)
-    private DeviceType type;
-
-    @Column(name = "name")
-    private String name;
+    @Column(name = "synced_to_homegraph")
+    private Boolean syncedToHomegraph;
 
     @Column(name = "last_seen")
     @UpdateTimestamp
