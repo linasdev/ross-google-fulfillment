@@ -54,10 +54,11 @@ public class FulfillmentService extends SmartHomeApp {
                 .map(device -> new SyncResponse.Payload.Device.Builder()
                         .setId(device.getId().toString())
                         .setType(device.getType().getGoogleDeviceType())
+                        .setTraits(device.getType().getGoogleDeviceTraits())
                         .setName(DeviceProto.DeviceNames.newBuilder()
                                 .setName(device.getName())
                                 .build())
-                        .setTraits(device.getType().getGoogleDeviceTraits())
+                        .setWillReportState(true)
                         .build())
                 .collect(Collectors.toList());
 
