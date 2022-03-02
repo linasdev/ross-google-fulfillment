@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -39,7 +41,9 @@ public class GatewayService {
 
         HashMap<String, Object> states = new HashMap<>();
 
-        boolean requestSync = false;
+        boolean requestHomegraphSync = false;
+
+        List<Device> devices = new ArrayList<>();
 
         for (DeviceState state : request.getDeviceStates()) {
             Device device = deviceService.getByGatewayIdAndPeripheralDetailsAndType(gatewayId, state.getPeripheralAddress(), state.getPeripheralIndex(), state.getPeripheralState().getType());
@@ -53,20 +57,26 @@ public class GatewayService {
                         .type(state.getPeripheralState().getType())
                         .peripheralAddress(state.getPeripheralAddress())
                         .peripheralIndex(state.getPeripheralIndex())
+                        .syncedToHomegraph(false)
                         .lastSeen(LocalDateTime.now())
                         .build();
 
-                requestSync = true;
+                requestHomegraphSync = true;
             } else {
                 device.setLastSeen(LocalDateTime.now());
+
+                if (!device.getSyncedToHomegraph()) {
+                    requestHomegraphSync = true;
+                }
             }
 
             deviceService.save(device);
 
             states.put(device.getId().toString(), state.getPeripheralState().getGoogleDeviceState());
+            devices.add(device);
         }
 
-        if (requestSync) {
+        if (requestHomegraphSync) {
             log.info("Requesting HomeGraph sync");
 
             RequestSyncDevicesRequest content = new RequestSyncDevicesRequest();
@@ -74,6 +84,10 @@ public class GatewayService {
 
             try {
                 homeGraphService.devices().requestSync(content).execute();
+                devices.forEach(device -> {
+                    device.setSyncedToHomegraph(true);
+                    deviceService.save(device);
+                });
             } catch (IOException e) {
                 log.warn("Failed to request HomeGraph sync", e);
             }
@@ -83,19 +97,19 @@ public class GatewayService {
 
         log.info("Sending HomeGraph report state and notification request with id: {}", requestId);
 
-        ReportStateAndNotificationDevice devices = new ReportStateAndNotificationDevice();
-        devices.setStates(states);
+        ReportStateAndNotificationDevice reportStateRequestDevices = new ReportStateAndNotificationDevice();
+        reportStateRequestDevices.setStates(states);
 
-        StateAndNotificationPayload payload = new StateAndNotificationPayload();
-        payload.setDevices(devices);
+        StateAndNotificationPayload reportStateRequestPayload = new StateAndNotificationPayload();
+        reportStateRequestPayload.setDevices(reportStateRequestDevices);
 
-        ReportStateAndNotificationRequest content = new ReportStateAndNotificationRequest();
-        content.setRequestId(requestId.toString());
-        content.setAgentUserId(gateway.getAccount().getId().toString());
-        content.setPayload(payload);
+        ReportStateAndNotificationRequest reportStateRequest = new ReportStateAndNotificationRequest();
+        reportStateRequest.setRequestId(requestId.toString());
+        reportStateRequest.setAgentUserId(gateway.getAccount().getId().toString());
+        reportStateRequest.setPayload(reportStateRequestPayload);
 
         try {
-            homeGraphService.devices().reportStateAndNotification(content).execute();
+            homeGraphService.devices().reportStateAndNotification(reportStateRequest).execute();
         } catch (IOException e) {
             log.warn("Failed to report device state to HomeGraph", e);
         }
