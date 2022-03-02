@@ -44,6 +44,8 @@ public class FulfillmentService extends SmartHomeApp {
     @NotNull
     @Override
     public SyncResponse onSync(SyncRequest request, Map<?, ?> headers) {
+        log.info("Fulfilling SYNC request with id {}", request.getRequestId());
+
         Account account = accountService.findOrCreate(getTokenSubject());
 
         List<SyncResponse.Payload.Device> devices = account.getGateways()
@@ -68,6 +70,8 @@ public class FulfillmentService extends SmartHomeApp {
     @NotNull
     @Override
     public QueryResponse onQuery(QueryRequest request, Map<?, ?> headers) {
+        log.info("Fulfilling QUERY request with id {}", request.getRequestId());
+
         Account account = accountService.findOrCreate(getTokenSubject());
 
         QueryRequest.Inputs.Payload.Device[] queryDevices = ((QueryRequest.Inputs) request.getInputs()[0]).getPayload().getDevices();
@@ -114,6 +118,8 @@ public class FulfillmentService extends SmartHomeApp {
     @NotNull
     @Override
     public ExecuteResponse onExecute(ExecuteRequest request, Map<?, ?> headers) {
+        log.info("Fulfilling EXECUTE request with id {}", request.getRequestId());
+
         List<ExecuteRequest.Inputs.Payload.Commands> commands = Stream.of(request.getInputs())
                 .map(input -> (ExecuteRequest.Inputs) input)
                 .map(input -> input.getPayload())
