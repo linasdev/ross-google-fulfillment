@@ -60,7 +60,7 @@ public class PeripheralState {
                 return Map.of(
                         "on", Boolean.valueOf(on),
                         "color", Map.of(
-                                "spectrumRGB", Long.valueOf(red) << 32 + Long.valueOf(green) << 16 + Long.valueOf(blue)
+                                "spectrumRGB", Long.valueOf(red) << 16 + Long.valueOf(green) << 8 + Long.valueOf(blue)
                         )
                 );
             }
