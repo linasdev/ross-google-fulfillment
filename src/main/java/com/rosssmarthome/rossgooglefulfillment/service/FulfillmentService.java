@@ -193,7 +193,7 @@ public class FulfillmentService extends SmartHomeApp {
                                     throw new UnsupportedOperationException();
                             }
 
-                            Long brightness = (long) ((Map<String, Object>) execution.getParams()).get("brightness");
+                            Integer brightness = (int) ((Map<String, Object>) execution.getParams()).get("brightness");
 
                             deviceCommand.setType(commandType);
                             deviceCommand.getPayload().put(
