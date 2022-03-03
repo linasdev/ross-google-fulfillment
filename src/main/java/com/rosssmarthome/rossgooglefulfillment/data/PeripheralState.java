@@ -64,6 +64,25 @@ public class PeripheralState {
                         )
                 );
             }
+            case BCM_RGBW: {
+                String on = payload.get(StateKey.ON);
+                String red = payload.get(StateKey.RED);
+                String green = payload.get(StateKey.GREEN);
+                String blue = payload.get(StateKey.BLUE);
+                String white = payload.get(StateKey.WHITE);
+
+                if (on == null || red == null || green == null || blue == null) {
+                    return null;
+                }
+
+                return Map.of(
+                        "on", Boolean.valueOf(on),
+                        "color", Map.of(
+                                "spectrumRGB", Long.valueOf(red) << 16 + Long.valueOf(green) << 8 + Long.valueOf(blue)
+                        ),
+                        "brightness", Double.valueOf(white) / 255 * 100
+                );
+            }
             default:
                 throw new UnsupportedOperationException();
         }

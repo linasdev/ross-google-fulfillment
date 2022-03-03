@@ -5,5 +5,6 @@ public enum StateKey {
     BRIGHTNESS,
     RED,
     GREEN,
-    BLUE;
+    BLUE,
+    WHITE;
 }

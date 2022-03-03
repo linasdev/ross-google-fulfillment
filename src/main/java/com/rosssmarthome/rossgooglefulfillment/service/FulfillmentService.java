@@ -134,11 +134,12 @@ public class FulfillmentService extends SmartHomeApp {
 
             for (ExecuteRequest.Inputs.Payload.Commands.Execution execution : command.getExecution()) {
                 for (ExecuteRequest.Inputs.Payload.Commands.Devices executeDevice : command.getDevices()) {
-                    Device device = deviceService.getById(UUID.fromString(executeDevice.getId()));
+                    Device device = deviceService.getById(UUID.fromString((String) executeDevice.getId()));
                     UUID gatewayId = device.getGateway().getId();
 
                     DeviceCommand deviceCommand = DeviceCommand.from(
                             (String) execution.getCommand(),
+                            (Map<String, Object>) execution.getParams(),
                             device.getPeripheralAddress(),
                             device.getPeripheralIndex(),
                             device.getType()

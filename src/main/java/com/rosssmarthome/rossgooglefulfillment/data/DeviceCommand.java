@@ -28,7 +28,7 @@ public class DeviceCommand {
     @Builder.Default
     private Map<StateKey, Object> payload = new HashMap<>();
 
-    public static DeviceCommand from(String command, Long peripheralAddress, Long peripheralIndex, DeviceType deviceType) {
+    public static DeviceCommand from(String command, Map<String, Object> params, Long peripheralAddress, Long peripheralIndex, DeviceType deviceType) {
         DeviceCommand deviceCommand = DeviceCommand.builder()
                 .peripheralAddress(peripheralAddress)
                 .peripheralIndex(peripheralIndex)
@@ -38,7 +38,7 @@ public class DeviceCommand {
             case "action.devices.commands.OnOff": {
                 CommandType commandType;
 
-                boolean on = (boolean) ((Map<String, Object>) execution.getParams()).get("on");
+                boolean on = (boolean) params.get("on");
 
                 if (on) {
                     switch (deviceType) {
@@ -85,7 +85,7 @@ public class DeviceCommand {
                         throw new UnsupportedOperationException();
                 }
 
-                Integer brightness = (int) ((Map<String, Object>) execution.getParams()).get("brightness");
+                Integer brightness = (int) params.get("brightness");
 
                 deviceCommand.setType(commandType);
                 deviceCommand.getPayload().put(
@@ -96,7 +96,7 @@ public class DeviceCommand {
             }
 
             case "action.devices.commands.ColorAbsolute": {
-                Map<String, Object> colorMap = (Map<String, Object>) ((Map<String, Object>) execution.getParams()).get("color");
+                Map<String, Object> colorMap = (Map<String, Object>) params.get("color");
                 Integer hexColor = (int) colorMap.get("spectrumRGB");
 
                 deviceCommand.setType(CommandType.BCM_SET_RGB);
@@ -118,5 +118,7 @@ public class DeviceCommand {
             default:
                 throw new UnsupportedOperationException();
         }
+
+        return deviceCommand;
     }
 }
