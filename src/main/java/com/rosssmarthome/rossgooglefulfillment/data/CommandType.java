@@ -7,5 +7,5 @@ public enum CommandType {
     BCM_TURN_OFF,
     BCM_SET_SINGLE,
     BCM_SET_RGB,
-    BCM_SET_WHITE;
+    BCM_SET_RGBW;
 }

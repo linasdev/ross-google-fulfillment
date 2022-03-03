@@ -72,22 +72,9 @@ public class DeviceCommand {
                 break;
             }
             case "action.devices.commands.BrightnessAbsolute": {
-                CommandType commandType;
-
-                switch (deviceType) {
-                    case BCM_SINGLE:
-                        commandType = CommandType.BCM_SET_SINGLE;
-                        break;
-                    case BCM_RGBW:
-                        commandType = CommandType.BCM_SET_WHITE;
-                        break;
-                    default:
-                        throw new UnsupportedOperationException();
-                }
-
                 Integer brightness = (int) params.get("brightness");
 
-                deviceCommand.setType(commandType);
+                deviceCommand.setType(CommandType.BCM_SET_SINGLE);
                 deviceCommand.getPayload().put(
                         StateKey.BRIGHTNESS,
                         (long) (brightness.doubleValue() / 100 * 255)
@@ -97,21 +84,44 @@ public class DeviceCommand {
 
             case "action.devices.commands.ColorAbsolute": {
                 Map<String, Object> colorMap = (Map<String, Object>) params.get("color");
-                Integer hexColor = (int) colorMap.get("spectrumRGB");
+                Long hexColor = (long) ((int) colorMap.get("spectrumRGB"));
 
-                deviceCommand.setType(CommandType.BCM_SET_RGB);
-                deviceCommand.getPayload().put(
-                        StateKey.RED,
-                        hexColor >> 16 & 0xff
-                );
-                deviceCommand.getPayload().put(
-                        StateKey.GREEN,
-                        hexColor >> 8 & 0xff
-                );
-                deviceCommand.getPayload().put(
-                        StateKey.BLUE,
-                        hexColor & 0xff
-                );
+                switch (deviceType) {
+                    case BCM_RGB: {
+                        deviceCommand.setType(CommandType.BCM_SET_RGB);
+                        deviceCommand.getPayload().put(
+                                StateKey.RED,
+                                hexColor >> 16 & 0xff
+                        );
+                        deviceCommand.getPayload().put(
+                                StateKey.GREEN,
+                                hexColor >> 8 & 0xff
+                        );
+                        deviceCommand.getPayload().put(
+                                StateKey.BLUE,
+                                hexColor & 0xff
+                        );
+                        break;
+                    }
+
+                    case BCM_RGBW: {
+                        Long red = hexColor >> 16 & 0xff;
+                        Long green = hexColor >> 8 & 0xff;
+                        Long blue = hexColor & 0xff;
+
+                        Long minValue = Long.min(red, Long.min(green, blue));
+
+                        deviceCommand.setType(CommandType.BCM_SET_RGBW);
+                        deviceCommand.getPayload().put(StateKey.RED, red - minValue);
+                        deviceCommand.getPayload().put(StateKey.GREEN, green - minValue);
+                        deviceCommand.getPayload().put(StateKey.BLUE, blue - minValue);
+                        deviceCommand.getPayload().put(StateKey.WHITE, minValue);
+                        break;
+                    }
+
+                    default:
+                        throw new UnsupportedOperationException();
+                }
 
                 break;
             }
