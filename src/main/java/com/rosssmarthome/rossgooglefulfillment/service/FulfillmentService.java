@@ -143,13 +143,86 @@ public class FulfillmentService extends SmartHomeApp {
                             .build();
 
                     switch (execution.getCommand()) {
-                        case "action.devices.commands.BrightnessAbsolute":
-                            deviceCommand.setType(CommandType.BCM_SET_SINGLE);
+                        case "action.devices.commands.OnOff": {
+                            CommandType commandType;
+
+                            boolean on = (boolean) ((Map<String, Object>) execution.getParams()).get("on");
+
+                            if (on) {
+                                switch (device.getType()) {
+                                    case RELAY_SINGLE:
+                                        commandType = CommandType.RELAY_TURN_ON_SINGLE;
+                                        break;
+                                    case BCM_SINGLE:
+                                    case BCM_RGB:
+                                    case BCM_RGBW:
+                                        commandType = CommandType.BCM_TURN_ON;
+                                        break;
+                                    default:
+                                        throw new UnsupportedOperationException();
+                                }
+                            } else {
+                                switch (device.getType()) {
+                                    case RELAY_SINGLE:
+                                        commandType = CommandType.RELAY_TURN_OFF_SINGLE;
+                                        break;
+                                    case BCM_SINGLE:
+                                    case BCM_RGB:
+                                    case BCM_RGBW:
+                                        commandType = CommandType.BCM_TURN_OFF;
+                                        break;
+                                    default:
+                                        throw new UnsupportedOperationException();
+                                }
+                            }
+
+                            deviceCommand.setType(commandType);
+                            break;
+                        }
+                        case "action.devices.commands.BrightnessAbsolute": {
+                            CommandType commandType;
+
+                            switch (device.getType()) {
+                                case BCM_SINGLE:
+                                    commandType = CommandType.BCM_SET_SINGLE;
+                                    break;
+                                case BCM_RGBW:
+                                    commandType = CommandType.BCM_SET_WHITE;
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException();
+                            }
+
+                            Long brightness = (long) ((Map<String, Object>) execution.getParams()).get("brightness");
+
+                            deviceCommand.setType(commandType);
                             deviceCommand.getPayload().put(
                                     StateKey.BRIGHTNESS,
-                                    Long.valueOf((long) (((Integer) execution.getParams().get("brightness")).doubleValue() / 100 * 255))
+                                    (long) (brightness.doubleValue() / 100 * 255)
                             );
                             break;
+                        }
+
+                        case "action.devices.commands.ColorAbsolute": {
+                            Map<String, Object> colorMap = (Map<String, Object>) ((Map<String, Object>) execution.getParams()).get("color");
+                            Integer hexColor = (int) colorMap.get("spectrumRGB");
+
+                            deviceCommand.setType(CommandType.BCM_SET_RGB);
+                            deviceCommand.getPayload().put(
+                                    StateKey.RED,
+                                    hexColor >> 16 & 0xff
+                            );
+                            deviceCommand.getPayload().put(
+                                    StateKey.GREEN,
+                                    hexColor >> 8 & 0xff
+                            );
+                            deviceCommand.getPayload().put(
+                                    StateKey.BLUE,
+                                    hexColor & 0xff
+                            );
+
+                            break;
+                        }
                         default:
                             throw new UnsupportedOperationException();
                     }
