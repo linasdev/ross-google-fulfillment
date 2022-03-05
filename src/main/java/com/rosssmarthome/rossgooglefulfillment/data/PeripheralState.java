@@ -47,31 +47,14 @@ public class PeripheralState {
                         "brightness", Double.valueOf(brightness) / 255 * 100
                 );
             }
-            case BCM_RGB: {
+            case BCM_RGB_B: {
                 String on = payload.get(StateKey.ON);
                 String red = payload.get(StateKey.RED);
                 String green = payload.get(StateKey.GREEN);
                 String blue = payload.get(StateKey.BLUE);
+                String brightness = payload.get(StateKey.BRIGHTNESS);
 
-                if (on == null || red == null || green == null || blue == null) {
-                    return null;
-                }
-
-                return Map.of(
-                        "on", Boolean.valueOf(on),
-                        "color", Map.of(
-                                "spectrumRGB", Long.valueOf(red) << 16 + Long.valueOf(green) << 8 + Long.valueOf(blue)
-                        )
-                );
-            }
-            case BCM_RGBW: {
-                String on = payload.get(StateKey.ON);
-                String red = payload.get(StateKey.RED);
-                String green = payload.get(StateKey.GREEN);
-                String blue = payload.get(StateKey.BLUE);
-                String white = payload.get(StateKey.WHITE);
-
-                if (on == null || red == null || green == null || blue == null) {
+                if (on == null || red == null || green == null || blue == null || brightness == null) {
                     return null;
                 }
 
@@ -80,7 +63,27 @@ public class PeripheralState {
                         "color", Map.of(
                                 "spectrumRGB", Long.valueOf(red) << 16 + Long.valueOf(green) << 8 + Long.valueOf(blue)
                         ),
-                        "brightness", Double.valueOf(white) / 255 * 100
+                        "brightness", brightness
+                );
+            }
+            case BCM_RGBW_B: {
+                String on = payload.get(StateKey.ON);
+                String red = payload.get(StateKey.RED);
+                String green = payload.get(StateKey.GREEN);
+                String blue = payload.get(StateKey.BLUE);
+                String white = payload.get(StateKey.WHITE);
+                String brightness = payload.get(StateKey.BRIGHTNESS);
+
+                if (on == null || red == null || green == null || blue == null || white == null || brightness == null) {
+                    return null;
+                }
+
+                return Map.of(
+                        "on", Boolean.valueOf(on),
+                        "color", Map.of(
+                                "spectrumRGB", Long.valueOf(red + white) << 16 + Long.valueOf(green + white) << 8 + Long.valueOf(blue + white)
+                        ),
+                        "brightness", Double.valueOf(brightness) / 255 * 100
                 );
             }
             default:

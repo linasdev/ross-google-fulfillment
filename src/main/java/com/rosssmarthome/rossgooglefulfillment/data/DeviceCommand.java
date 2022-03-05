@@ -46,8 +46,8 @@ public class DeviceCommand {
                             commandType = CommandType.RELAY_TURN_ON_SINGLE;
                             break;
                         case BCM_SINGLE:
-                        case BCM_RGB:
-                        case BCM_RGBW:
+                        case BCM_RGB_B:
+                        case BCM_RGBW_B:
                             commandType = CommandType.BCM_TURN_ON;
                             break;
                         default:
@@ -59,8 +59,8 @@ public class DeviceCommand {
                             commandType = CommandType.RELAY_TURN_OFF_SINGLE;
                             break;
                         case BCM_SINGLE:
-                        case BCM_RGB:
-                        case BCM_RGBW:
+                        case BCM_RGB_B:
+                        case BCM_RGBW_B:
                             commandType = CommandType.BCM_TURN_OFF;
                             break;
                         default:
@@ -87,7 +87,7 @@ public class DeviceCommand {
                 Long hexColor = (long) ((int) colorMap.get("spectrumRGB"));
 
                 switch (deviceType) {
-                    case BCM_RGB: {
+                    case BCM_RGB_B: {
                         deviceCommand.setType(CommandType.BCM_SET_RGB);
                         deviceCommand.getPayload().put(
                                 StateKey.RED,
@@ -104,7 +104,7 @@ public class DeviceCommand {
                         break;
                     }
 
-                    case BCM_RGBW: {
+                    case BCM_RGBW_B: {
                         Long red = hexColor >> 16 & 0xff;
                         Long green = hexColor >> 8 & 0xff;
                         Long blue = hexColor & 0xff;
