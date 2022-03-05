@@ -71,7 +71,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: ross-google-fulfillment
-          path: /tmp
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
