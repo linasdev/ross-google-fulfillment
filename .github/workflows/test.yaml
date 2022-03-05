@@ -2,11 +2,11 @@ name: Test
 
 on:
   push:
-    branches:
-      - 'develop'
+    branches-ignore:
+      - 'master'
   pull_request:
     branches:
-      - 'develop'
+      - '**'
 
 jobs:
   test:
