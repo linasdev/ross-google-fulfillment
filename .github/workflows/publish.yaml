@@ -6,7 +6,25 @@ on:
       - 'master'
 
 jobs:
-  push_to_registry:
+  test:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+
+      - name: Run tests
+        run: |
+          ./gradlew test
+
+  publish:
+    needs: test
+
     runs-on: ubuntu-20.04
 
     steps:
