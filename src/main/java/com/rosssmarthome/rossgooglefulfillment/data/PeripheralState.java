@@ -36,6 +36,7 @@ public class PeripheralState {
                 );
             }
             case BCM_SINGLE: {
+                String on = payload.get(StateKey.ON);
                 String brightness = payload.get(StateKey.BRIGHTNESS);
 
                 if (brightness == null) {
@@ -43,7 +44,7 @@ public class PeripheralState {
                 }
 
                 return Map.of(
-                        "on", Long.valueOf(brightness) != 0,
+                        "on", Boolean.valueOf(on),
                         "brightness", Double.valueOf(brightness) / 255 * 100
                 );
             }
