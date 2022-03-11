@@ -26,7 +26,7 @@ public class DeviceCommand {
 
     @NotEmpty
     @Builder.Default
-    private Map<StateKey, Object> payload = new HashMap<>();
+    private Map<CommandPayloadKey, Object> payload = new HashMap<>();
 
     public static DeviceCommand from(String command, Map<String, Object> params, Long peripheralAddress, Long peripheralIndex, DeviceType deviceType) {
         DeviceCommand deviceCommand = DeviceCommand.builder()
@@ -40,33 +40,23 @@ public class DeviceCommand {
 
                 boolean on = (boolean) params.get("on");
 
-                if (on) {
-                    switch (deviceType) {
-                        case RELAY_SINGLE:
-                            commandType = CommandType.RELAY_TURN_ON_SINGLE;
-                            break;
-                        case BCM_SINGLE:
-                        case BCM_RGB_B:
-                        case BCM_RGBW_B:
-                            commandType = CommandType.BCM_TURN_ON;
-                            break;
-                        default:
-                            throw new UnsupportedOperationException();
-                    }
-                } else {
-                    switch (deviceType) {
-                        case RELAY_SINGLE:
-                            commandType = CommandType.RELAY_TURN_OFF_SINGLE;
-                            break;
-                        case BCM_SINGLE:
-                        case BCM_RGB_B:
-                        case BCM_RGBW_B:
-                            commandType = CommandType.BCM_TURN_OFF;
-                            break;
-                        default:
-                            throw new UnsupportedOperationException();
-                    }
+                switch (deviceType) {
+                    case RELAY_SINGLE:
+                        commandType = CommandType.RELAY_SET_SINGLE;
+                        break;
+                    case BCM_SINGLE:
+                    case BCM_RGB_B:
+                    case BCM_RGBW_B:
+                        commandType = CommandType.BCM_SET_BINARY;
+                        break;
+                    default:
+                        throw new UnsupportedOperationException();
                 }
+
+                deviceCommand.getPayload().put(
+                        CommandPayloadKey.VALUE,
+                       on
+                );
 
                 deviceCommand.setType(commandType);
                 break;
@@ -76,7 +66,7 @@ public class DeviceCommand {
 
                 deviceCommand.setType(CommandType.BCM_SET_SINGLE);
                 deviceCommand.getPayload().put(
-                        StateKey.BRIGHTNESS,
+                        CommandPayloadKey.VALUE,
                         (long) (brightness.doubleValue() / 100 * 255)
                 );
                 break;
@@ -90,15 +80,15 @@ public class DeviceCommand {
                     case BCM_RGB_B: {
                         deviceCommand.setType(CommandType.BCM_SET_RGB);
                         deviceCommand.getPayload().put(
-                                StateKey.RED,
+                                CommandPayloadKey.RED,
                                 hexColor >> 16 & 0xff
                         );
                         deviceCommand.getPayload().put(
-                                StateKey.GREEN,
+                                CommandPayloadKey.GREEN,
                                 hexColor >> 8 & 0xff
                         );
                         deviceCommand.getPayload().put(
-                                StateKey.BLUE,
+                                CommandPayloadKey.BLUE,
                                 hexColor & 0xff
                         );
                         break;
@@ -112,10 +102,10 @@ public class DeviceCommand {
                         Long minValue = Long.min(red, Long.min(green, blue));
 
                         deviceCommand.setType(CommandType.BCM_SET_RGBW);
-                        deviceCommand.getPayload().put(StateKey.RED, red - minValue);
-                        deviceCommand.getPayload().put(StateKey.GREEN, green - minValue);
-                        deviceCommand.getPayload().put(StateKey.BLUE, blue - minValue);
-                        deviceCommand.getPayload().put(StateKey.WHITE, minValue);
+                        deviceCommand.getPayload().put(CommandPayloadKey.RED, red - minValue);
+                        deviceCommand.getPayload().put(CommandPayloadKey.GREEN, green - minValue);
+                        deviceCommand.getPayload().put(CommandPayloadKey.BLUE, blue - minValue);
+                        deviceCommand.getPayload().put(CommandPayloadKey.WHITE, minValue);
                         break;
                     }
 
